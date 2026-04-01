@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_NAME: api-comerce-in
+      JWT_SECRET: change-me
+      JWT_ALGORITHM: HS256
+      JWT_ACCESS_TOKEN_EXPIRES_MINUTES: "30"
+      ADMIN_EMAIL: you@example.com
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ecommerce
+      STRIPE_SECRET_KEY: sk_test_xxx
+      STRIPE_WEBHOOK_SECRET: whsec_xxx
+    depends_on:
+      postgres:
+        condition: service_healthy
+

@@ -60,3 +60,64 @@ uv run alembic upgrade head
 Apply new migrations after model changes (or add a new revision with `uv run alembic revision --autogenerate -m "describe change"` when the DB is reachable).
 
 Full guide: [docs/STEP_BY_STEP.md](docs/STEP_BY_STEP.md).
+
+---
+
+## Docker (one command) — API + Postgres
+
+This repo includes a `Dockerfile` and a compose overlay to run the **API** together with **Postgres**.
+
+Start (build + run + migrate):
+
+```bash
+./scripts/start.sh
+```
+
+Stop:
+
+```bash
+./scripts/stop.sh
+```
+
+API: `http://localhost:8000`  
+Swagger: `http://localhost:8000/docs`
+
+---
+
+## CD: publish Docker image to GHCR
+
+This repo contains a GitHub Actions workflow that builds and publishes a Docker image to **GitHub Container Registry (GHCR)** on every push to `master`:
+
+- workflow: `.github/workflows/deploy-ghcr.yml`
+- image: `ghcr.io/<owner>/<repo>`
+- tags: `latest` and `sha-<commit>`
+
+### Pull and run on another machine (no git clone needed)
+
+1) (If the repo/image is private) login once:
+
+```bash
+docker login ghcr.io
+```
+
+2) Pull:
+
+```bash
+docker pull ghcr.io/<owner>/<repo>:latest
+```
+
+3) Run (example):
+
+```bash
+docker run -d --name api \
+  -p 8000:8000 \
+  -e APP_ENV=prod \
+  -e DATABASE_URL="postgresql+psycopg://postgres:postgres@<db-host>:5432/ecommerce" \
+  -e JWT_SECRET="replace-me-with-a-strong-secret" \
+  -e ADMIN_EMAIL="you@example.com" \
+  ghcr.io/<owner>/<repo>:latest
+```
+
+Notes:
+- GHCR is only used to **download** the image. Once the container is running, it does **not** need GitHub to stay online.
+- You still need a reachable Postgres instance (same server via Docker Compose, or an external managed DB).
