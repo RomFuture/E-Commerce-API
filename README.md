@@ -1,6 +1,21 @@
 ## E-Commerce API (Backend)
 
-### Local development
+Backend API for a minimal e-commerce system built with **FastAPI** + **SQLAlchemy** + **PostgreSQL**.
+
+### Features
+
+- **Auth**: signup/login with JWT, `/me`
+- **Products**: public list/detail/search
+- **Cart**: add/update/remove items, totals
+- **Admin**: admin-only endpoints via `ADMIN_EMAIL`
+- **Migrations**: Alembic
+- **Quality**: Ruff (lint + format), pytest, GitHub Actions CI
+
+---
+
+## Installation and usage
+
+### 1) Local development (uv + local process)
 
 Install `uv` (recommended). On Ubuntu/Debian, avoid `pip install --user` because system Python may be externally managed (PEP 668).
 
@@ -24,6 +39,18 @@ Configuration (Chapter 3):
 
 ```bash
 cp .env.example .env
+```
+
+Start Postgres (Docker):
+
+```bash
+docker compose up -d postgres
+```
+
+Apply migrations:
+
+```bash
+uv run alembic upgrade head
 ```
 
 Run the API:
@@ -63,7 +90,7 @@ Full guide: [docs/STEP_BY_STEP.md](docs/STEP_BY_STEP.md).
 
 ---
 
-## Docker (one command) — API + Postgres
+### 2) Local run with Docker (one command) — API + Postgres
 
 This repo includes a `Dockerfile` and a compose overlay to run the **API** together with **Postgres**.
 
@@ -84,17 +111,26 @@ Swagger: `http://localhost:8000/docs`
 
 ---
 
-## CD: publish Docker image to GHCR
+### 3) Server deployment using GHCR (docker pull)
 
-This repo contains a GitHub Actions workflow that builds and publishes a Docker image to **GitHub Container Registry (GHCR)** on every push to `master`:
+This project can be deployed without cloning the repo: you **pull** the Docker image from **GHCR** and run it.
 
-- workflow: `.github/workflows/deploy-ghcr.yml`
-- image: `ghcr.io/<owner>/<repo>`
-- tags: `latest` and `sha-<commit>`
+#### What runs where
 
-### Pull and run on another machine (no git clone needed)
+- **GitHub**: stores your source code (repo) and your built Docker images (GHCR)
+- **Your server**: downloads the image once and runs it as a container
+- **PostgreSQL**: must be reachable from the API container (same server via Docker Compose, or external managed DB)
 
-1) (If the repo/image is private) login once:
+#### Image location and tags
+
+The CD workflow publishes:
+
+- **Image**: `ghcr.io/<owner>/<repo>`
+- **Tags**: `latest`, `sha-<commit>`
+
+#### Pull and run (example)
+
+1) (If the image is private) login once:
 
 ```bash
 docker login ghcr.io
@@ -106,7 +142,7 @@ docker login ghcr.io
 docker pull ghcr.io/<owner>/<repo>:latest
 ```
 
-3) Run (example):
+3) Run the container:
 
 ```bash
 docker run -d --name api \
@@ -120,4 +156,31 @@ docker run -d --name api \
 
 Notes:
 - GHCR is only used to **download** the image. Once the container is running, it does **not** need GitHub to stay online.
-- You still need a reachable Postgres instance (same server via Docker Compose, or an external managed DB).
+- Replace `<db-host>` with a real hostname/IP. If you want `@postgres:5432/...`, you must run Postgres as a **Docker container on the same Docker network** (e.g. Docker Compose).
+
+---
+
+## CI/CD
+
+### CI
+
+- Workflow: `.github/workflows/ci.yml`
+- Runs on every push/PR: Ruff lint, Ruff format check, pytest (SQLite + Postgres job)
+
+### CD (publish Docker image to GHCR)
+
+This repo contains a GitHub Actions workflow that builds and publishes a Docker image to **GitHub Container Registry (GHCR)** on every push to `master`:
+
+- workflow: `.github/workflows/deploy-ghcr.yml`
+- image: `ghcr.io/<owner>/<repo>`
+- tags: `latest` and `sha-<commit>`
+
+---
+
+## TODO
+
+| Done | Task |
+|------|------|
+| [ ] | Stripe implementation (see `docs/STRIPE_INTEGRATION_GUIDE.md`) |
+| [ ] | Understand how these tools work: Ruff, httpx, uv, FastAPI `TestClient`, bcrypt |
+| [ ] | Clean repo and code (delete unnecessary files, ensure caches/logs are not tracked) |
