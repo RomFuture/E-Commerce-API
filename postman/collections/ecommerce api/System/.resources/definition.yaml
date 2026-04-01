@@ -1,0 +1,4 @@
+$kind: collection
+name: System
+description: Health and info endpoints exposed at the root of the application (no auth required).
+order: 1000

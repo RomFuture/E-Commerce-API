@@ -1,0 +1,10 @@
+$kind: collection
+name: Auth
+description: |-
+  User registration, login, and profile endpoints.
+  Base path: /api/v1/auth
+
+  - POST /signup  — register a new account (returns UserPublic, 201)
+  - POST /login   — obtain a Bearer token (OAuth2 password form)
+  - GET  /me      — return the authenticated user's profile
+order: 2000

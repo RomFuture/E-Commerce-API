@@ -1,0 +1,45 @@
+$kind: http-request
+name: List Products
+method: GET
+url: '{{base_url}}/api/v1/products'
+order: 1000
+queryParams:
+  - key: q
+    value: ''
+    description: 'Optional full-text search term'
+    disabled: true
+  - key: min_price
+    value: ''
+    description: 'Minimum price filter (decimal)'
+    disabled: true
+  - key: max_price
+    value: ''
+    description: 'Maximum price filter (decimal)'
+    disabled: true
+  - key: limit
+    value: '20'
+    description: 'Number of results per page (1–100, default 20)'
+  - key: offset
+    value: '0'
+    description: 'Pagination offset (default 0)'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has items array and total", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("items").that.is.an("array");
+          pm.expect(json).to.have.property("total").that.is.a("number");
+      });
+      pm.test("Each item has required product fields", function () {
+          const json = pm.response.json();
+          json.items.forEach(function (item) {
+              pm.expect(item).to.have.property("id");
+              pm.expect(item).to.have.property("name");
+              pm.expect(item).to.have.property("price");
+              pm.expect(item).to.have.property("stock_quantity");
+          });
+      });

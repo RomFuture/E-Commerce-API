@@ -1,0 +1,16 @@
+$kind: collection
+name: Cart
+description: |-
+  Shopping cart endpoints — all require a valid Bearer token.
+  Base path: /api/v1/cart
+
+  - GET    /                    — view current cart
+  - POST   /items               — add a product to the cart
+  - PATCH  /items/{product_id}  — update quantity of a cart line
+  - DELETE /items/{product_id}  — remove a product from the cart
+order: 4000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{auth_token}}'

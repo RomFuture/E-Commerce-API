@@ -1,0 +1,32 @@
+$kind: http-request
+name: Update Product
+method: PATCH
+url: '{{base_url}}/api/v1/admin/products/{{admin_product_id}}'
+order: 3000
+pathVariables:
+  - key: admin_product_id
+    value: '1'
+    description: 'ID of the product to update (set automatically by Create Product test script)'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "price": "69.99",
+      "stock_quantity": 100
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has updated product fields", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("id").that.is.a("number");
+          pm.expect(json).to.have.property("price");
+          pm.expect(json).to.have.property("is_active").that.is.a("boolean");
+      });

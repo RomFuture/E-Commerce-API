@@ -1,0 +1,9 @@
+$kind: collection
+name: Products
+description: |-
+  Public product catalogue endpoints (no auth required).
+  Base path: /api/v1/products
+
+  - GET /           — paginated product list with optional search and price filters
+  - GET /{product_id} — single product detail
+order: 3000

@@ -1,0 +1,37 @@
+$kind: http-request
+name: Create Product
+method: POST
+url: '{{base_url}}/api/v1/admin/products'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Wireless Headphones",
+      "description": "Over-ear noise-cancelling headphones",
+      "price": "79.99",
+      "stock_quantity": 50,
+      "is_active": true
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has admin product fields", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("id").that.is.a("number");
+          pm.expect(json).to.have.property("name").that.is.a("string");
+          pm.expect(json).to.have.property("price");
+          pm.expect(json).to.have.property("stock_quantity").that.is.a("number");
+          pm.expect(json).to.have.property("is_active").that.is.a("boolean");
+      });
+      // Save the new product ID for use in update/delete requests
+      if (pm.response.code === 201) {
+          pm.collectionVariables.set("admin_product_id", pm.response.json().id);
+      }

@@ -1,0 +1,17 @@
+$kind: http-request
+name: App Info
+method: GET
+url: '{{base_url}}/info'
+order: 2000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response contains app_name and app_env", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("app_name");
+          pm.expect(json).to.have.property("app_env");
+      });

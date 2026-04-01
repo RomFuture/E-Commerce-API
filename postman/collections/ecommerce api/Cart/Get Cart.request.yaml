@@ -1,0 +1,19 @@
+$kind: http-request
+name: Get Cart
+method: GET
+url: '{{base_url}}/api/v1/cart'
+order: 1000
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has cart shape", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("lines").that.is.an("array");
+          pm.expect(json).to.have.property("line_count").that.is.a("number");
+          pm.expect(json).to.have.property("item_quantity_total").that.is.a("number");
+          pm.expect(json).to.have.property("subtotal");
+      });

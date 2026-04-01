@@ -1,0 +1,22 @@
+$kind: http-request
+name: Remove Item from Cart
+method: DELETE
+url: '{{base_url}}/api/v1/cart/items/{{cart_product_id}}'
+order: 4000
+pathVariables:
+  - key: cart_product_id
+    value: '1'
+    description: 'Product ID of the cart line to remove'
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has cart shape", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("lines").that.is.an("array");
+          pm.expect(json).to.have.property("line_count").that.is.a("number");
+          pm.expect(json).to.have.property("subtotal");
+      });

@@ -1,0 +1,27 @@
+$kind: http-request
+name: Sign Up
+method: POST
+url: '{{base_url}}/api/v1/auth/signup'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "user@example.com",
+      "password": "password123"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 201 Created", function () {
+          pm.response.to.have.status(201);
+      });
+      pm.test("Response has id and email", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("id").that.is.a("number");
+          pm.expect(json).to.have.property("email").that.is.a("string");
+      });

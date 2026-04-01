@@ -1,0 +1,30 @@
+$kind: http-request
+name: Update Cart Item Quantity
+method: PATCH
+url: '{{base_url}}/api/v1/cart/items/{{cart_product_id}}'
+order: 3000
+pathVariables:
+  - key: cart_product_id
+    value: '1'
+    description: 'Product ID of the cart line to update'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "quantity": 3
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 2xx", function () {
+          pm.response.to.be.success;
+      });
+      pm.test("Response has updated cart shape", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("lines").that.is.an("array");
+          pm.expect(json).to.have.property("subtotal");
+      });

@@ -1,6 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
@@ -12,17 +13,46 @@ from src.infrastructure.db.session import get_db_session
 
 @pytest.fixture
 def db_session():
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+    """
+    Integration DB session for tests.
+
+    Default: in-memory SQLite (fast, no external deps).
+    If `TEST_DATABASE_URL` is set: use that database (recommended: Postgres in Docker).
+    """
+    settings = get_settings()
+    test_db_url = getattr(settings, "test_database_url", None)  # backward-safe if not defined
+    # Prefer explicit env var to avoid surprises.
+    # Example:
+    #   TEST_DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5434/ecommerce_test
+    import os
+
+    test_db_url = os.getenv("TEST_DATABASE_URL") or test_db_url
+
+    if test_db_url:
+        engine = create_engine(test_db_url, pool_pre_ping=True)
+    else:
+        engine = create_engine(
+            "sqlite://",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+
+    # Ensure schema exists for the chosen DB.
     Base.metadata.create_all(engine)
     Session = sessionmaker(bind=engine)
     session = Session()
-    yield session
-    session.close()
-    Base.metadata.drop_all(engine)
+    try:
+        yield session
+    finally:
+        try:
+            session.close()
+        finally:
+            # Clean up tables between test runs.
+            try:
+                Base.metadata.drop_all(engine)
+            except SQLAlchemyError:
+                # If DB is unavailable at teardown, surface original test failure.
+                pass
 
 
 @pytest.fixture

@@ -1,0 +1,17 @@
+$kind: collection
+name: Admin
+description: |-
+  Admin-only endpoints — require a Bearer token whose email matches the server's
+  ADMIN_EMAIL setting. Use the Admin Login request (in Auth folder) to obtain a token.
+  Base path: /api/v1/admin
+
+  - GET    /health                  — verify admin access
+  - POST   /products                — create a new product
+  - PATCH  /products/{product_id}   — partially update a product
+  - DELETE /products/{product_id}   — delete a product (204 No Content)
+order: 5000
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{auth_token}}'

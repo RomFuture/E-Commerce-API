@@ -1,0 +1,33 @@
+$kind: http-request
+name: Add Item to Cart
+method: POST
+url: '{{base_url}}/api/v1/cart/items'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "product_id": 1,
+      "quantity": 2
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      pm.test("Status is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Response has updated cart shape", function () {
+          const json = pm.response.json();
+          pm.expect(json).to.have.property("lines").that.is.an("array");
+          pm.expect(json).to.have.property("line_count").that.is.a("number");
+          pm.expect(json).to.have.property("subtotal");
+      });
+      pm.test("Cart contains the added product", function () {
+          const json = pm.response.json();
+          const line = json.lines.find(l => l.product_id === 1);
+          pm.expect(line).to.not.be.undefined;
+      });
