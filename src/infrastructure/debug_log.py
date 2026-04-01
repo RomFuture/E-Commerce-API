@@ -22,7 +22,9 @@ def _write(payload: dict[str, Any]) -> None:
         f.write(json.dumps(payload, ensure_ascii=False) + "\n")
 
 
-def log(*, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, Any]) -> None:
+def log(
+    *, run_id: str, hypothesis_id: str, location: str, message: str, data: dict[str, Any]
+) -> None:
     _write(
         {
             "sessionId": _SESSION_ID,
@@ -46,4 +48,3 @@ def redact_db_url(database_url: str) -> dict[str, Any]:
         "port": url.port,
         "database": url.database,
     }
-

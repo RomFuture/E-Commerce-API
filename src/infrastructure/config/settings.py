@@ -37,4 +37,3 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Return cached application settings loaded from environment."""
     return Settings()
-

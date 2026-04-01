@@ -76,7 +76,9 @@ def upgrade() -> None:
         "orders",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("status", sa.String(length=32), server_default=sa.text("'pending'"), nullable=False),
+        sa.Column(
+            "status", sa.String(length=32), server_default=sa.text("'pending'"), nullable=False
+        ),
         sa.Column("total_amount", sa.Numeric(precision=12, scale=2), nullable=True),
         sa.Column(
             "created_at",
@@ -117,7 +119,9 @@ def upgrade() -> None:
         sa.Column("stripe_payment_intent_id", sa.String(length=255), nullable=True),
         sa.Column("amount", sa.Numeric(precision=12, scale=2), nullable=False),
         sa.Column("currency", sa.String(length=3), server_default=sa.text("'USD'"), nullable=False),
-        sa.Column("status", sa.String(length=32), server_default=sa.text("'pending'"), nullable=False),
+        sa.Column(
+            "status", sa.String(length=32), server_default=sa.text("'pending'"), nullable=False
+        ),
         sa.Column("stripe_event_id", sa.String(length=255), nullable=True),
         sa.Column(
             "created_at",
@@ -130,7 +134,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("order_id"),
         sa.UniqueConstraint("stripe_payment_intent_id"),
     )
-    op.create_index(op.f("ix_payments_stripe_event_id"), "payments", ["stripe_event_id"], unique=False)
+    op.create_index(
+        op.f("ix_payments_stripe_event_id"), "payments", ["stripe_event_id"], unique=False
+    )
 
 
 def downgrade() -> None:

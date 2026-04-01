@@ -22,7 +22,9 @@ class Payment(Base):
         unique=True,
         index=True,
     )
-    stripe_payment_intent_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+    stripe_payment_intent_id: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, unique=True
+    )
     amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
     status: Mapped[str] = mapped_column(

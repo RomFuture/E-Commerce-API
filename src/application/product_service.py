@@ -49,11 +49,7 @@ def list_public_products(
     try:
         total = db.scalar(select(func.count()).select_from(Product).where(where_clause)) or 0
         rows = db.scalars(
-            select(Product)
-            .where(where_clause)
-            .order_by(Product.id)
-            .limit(limit)
-            .offset(offset),
+            select(Product).where(where_clause).order_by(Product.id).limit(limit).offset(offset),
         ).all()
     except OperationalError as e:
         # region agent log

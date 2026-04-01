@@ -10,4 +10,3 @@ from src.infrastructure.db.session import get_db_session
 # def route(db: DbSession, settings: SettingsDep): ...
 DbSession = Annotated[Session, Depends(get_db_session)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
-

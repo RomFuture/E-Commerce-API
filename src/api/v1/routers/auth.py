@@ -6,7 +6,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.api.dependencies import DbSession
 from src.api.v1.deps.auth import CurrentUser
 from src.api.v1.schemas.auth import TokenResponse, UserPublic, UserSignup
-from src.application.auth_service import AuthError, authenticate_user, issue_access_token, register_user
+from src.application.auth_service import (
+    AuthError,
+    authenticate_user,
+    issue_access_token,
+    register_user,
+)
 
 router = APIRouter()
 

@@ -30,4 +30,3 @@ def get_db_session():
         yield db
     finally:
         db.close()
-
