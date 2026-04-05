@@ -11,14 +11,22 @@ from sqlalchemy.orm import Session
 
 from src.application.cart_service import get_cart_summary
 from src.domain.checkout_statuses import OrderStatus, PaymentStatus, assert_valid_order_transition
-from src.domain.ecommerce_rules import DomainError, ensure_cart_not_empty, validate_quantity_vs_stock
+from src.domain.ecommerce_rules import (
+    DomainError,
+    ensure_cart_not_empty,
+    validate_quantity_vs_stock,
+)
 from src.infrastructure.config.settings import Settings
 from src.infrastructure.db.models.cart_item import CartItem
 from src.infrastructure.db.models.order import Order
 from src.infrastructure.db.models.order_item import OrderItem
 from src.infrastructure.db.models.payment import Payment
 from src.infrastructure.db.models.product import Product
-from src.infrastructure.stripe.client import CheckoutLineInput, create_checkout_session_for_order, usd_decimal_to_cents
+from src.infrastructure.stripe.client import (
+    CheckoutLineInput,
+    create_checkout_session_for_order,
+    usd_decimal_to_cents,
+)
 
 
 class CheckoutError(Exception):
@@ -54,7 +62,9 @@ def start_checkout_from_cart(db: Session, user_id: int, settings: Settings) -> C
         if product is None or not product.is_active:
             raise CheckoutError("Product not available")
         try:
-            validate_quantity_vs_stock(quantity=line.quantity, stock_quantity=product.stock_quantity)
+            validate_quantity_vs_stock(
+                quantity=line.quantity, stock_quantity=product.stock_quantity
+            )
         except DomainError as e:
             raise CheckoutError(str(e)) from e
         line_total = product.price * line.quantity

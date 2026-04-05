@@ -46,7 +46,9 @@ def test_checkout_endpoint_with_cart(client, db_session):
         url="https://checkout.stripe.test/pay",
         payment_intent_id="pi_test_api",
     )
-    with patch("src.application.checkout_service.create_checkout_session_for_order", return_value=fake):
+    with patch(
+        "src.application.checkout_service.create_checkout_session_for_order", return_value=fake
+    ):
         r = client.post("/api/v1/checkout", headers=headers)
     assert r.status_code == 200
     body = r.json()
@@ -188,20 +190,28 @@ def test_webhook_duplicate_event_idempotent(client, db_session):
         "src.api.v1.routers.webhooks.stripe.Webhook.construct_event",
         return_value=ev,
     ):
-        assert client.post(
-            "/api/v1/webhooks/stripe",
-            content=b"{}",
-            headers={"stripe-signature": "t=0,v1=a"},
-        ).status_code == 200
-        assert client.post(
-            "/api/v1/webhooks/stripe",
-            content=b"{}",
-            headers={"stripe-signature": "t=0,v1=b"},
-        ).status_code == 200
+        assert (
+            client.post(
+                "/api/v1/webhooks/stripe",
+                content=b"{}",
+                headers={"stripe-signature": "t=0,v1=a"},
+            ).status_code
+            == 200
+        )
+        assert (
+            client.post(
+                "/api/v1/webhooks/stripe",
+                content=b"{}",
+                headers={"stripe-signature": "t=0,v1=b"},
+            ).status_code
+            == 200
+        )
 
     db_session.expire_all()
     assert db_session.get(Product, p.id).stock_quantity == 4
-    assert db_session.scalar(select(ProcessedWebhookEvent).where(ProcessedWebhookEvent.event_id == "evt_dup_1"))
+    assert db_session.scalar(
+        select(ProcessedWebhookEvent).where(ProcessedWebhookEvent.event_id == "evt_dup_1")
+    )
 
 
 def test_webhook_missing_signature(client):

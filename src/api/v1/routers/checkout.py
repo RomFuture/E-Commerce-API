@@ -9,7 +9,9 @@ router = APIRouter()
 
 
 @router.post("", response_model=CheckoutSessionOut)
-def create_checkout_session(user: CurrentUser, db: DbSession, settings: SettingsDep) -> CheckoutSessionOut:
+def create_checkout_session(
+    user: CurrentUser, db: DbSession, settings: SettingsDep
+) -> CheckoutSessionOut:
     try:
         started = start_checkout_from_cart(db, user.id, settings)
     except CheckoutError as e:

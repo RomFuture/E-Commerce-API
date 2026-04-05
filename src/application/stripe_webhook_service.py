@@ -91,7 +91,9 @@ def process_checkout_webhook_event(db: Session, event: Any) -> None:
                 continue
             product.stock_quantity -= item.quantity
 
-        assert_valid_payment_transition(from_status=payment.status, to_status=PaymentStatus.PAID.value)
+        assert_valid_payment_transition(
+            from_status=payment.status, to_status=PaymentStatus.PAID.value
+        )
         payment.status = PaymentStatus.PAID.value
         payment.stripe_event_id = event_id
 
