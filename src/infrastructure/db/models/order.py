@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.domain.checkout_statuses import OrderStatus
 from src.infrastructure.db.base import Base
 
 if TYPE_CHECKING:
@@ -25,8 +26,8 @@ class Order(Base):
     )
     status: Mapped[str] = mapped_column(
         String(32),
-        default="pending",
-        server_default="pending",
+        default=OrderStatus.PENDING.value,
+        server_default=OrderStatus.PENDING.value,
         index=True,
     )
     total_amount: Mapped[Decimal | None] = mapped_column(

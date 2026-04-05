@@ -1,11 +1,9 @@
 from decimal import Decimal
 
 from sqlalchemy import and_, func, select
-from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
 from src.domain.ecommerce_rules import validate_product_price_and_stock
-from src.infrastructure.debug_log import log
 from src.infrastructure.db.models.product import Product
 
 
@@ -34,34 +32,13 @@ def list_public_products(
     limit: int = 20,
     offset: int = 0,
 ) -> tuple[list[Product], int]:
-    # region agent log
-    log(
-        run_id="pre-fix",
-        hypothesis_id="H_conn",
-        location="src/application/product_service.py:list_public_products",
-        message="Listing products (about to query DB)",
-        data={"limit": limit, "offset": offset, "q_present": bool(q)},
-    )
-    # endregion
     limit = min(max(limit, 1), 100)
     offset = max(offset, 0)
     where_clause = _public_product_where(q=q, min_price=min_price, max_price=max_price)
-    try:
-        total = db.scalar(select(func.count()).select_from(Product).where(where_clause)) or 0
-        rows = db.scalars(
-            select(Product).where(where_clause).order_by(Product.id).limit(limit).offset(offset),
-        ).all()
-    except OperationalError as e:
-        # region agent log
-        log(
-            run_id="pre-fix",
-            hypothesis_id="H_conn",
-            location="src/application/product_service.py:list_public_products",
-            message="DB OperationalError during product list",
-            data={"error": str(e.__class__.__name__)},
-        )
-        # endregion
-        raise
+    total = db.scalar(select(func.count()).select_from(Product).where(where_clause)) or 0
+    rows = db.scalars(
+        select(Product).where(where_clause).order_by(Product.id).limit(limit).offset(offset),
+    ).all()
     return list(rows), int(total)
 
 

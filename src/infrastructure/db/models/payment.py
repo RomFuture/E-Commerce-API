@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from src.domain.checkout_statuses import PaymentStatus
 from src.infrastructure.db.base import Base
 
 if TYPE_CHECKING:
@@ -22,6 +23,16 @@ class Payment(Base):
         unique=True,
         index=True,
     )
+    provider: Mapped[str] = mapped_column(
+        String(32),
+        default="stripe",
+        server_default="stripe",
+    )
+    stripe_checkout_session_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        unique=True,
+    )
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(
         String(255), nullable=True, unique=True
     )
@@ -29,8 +40,8 @@ class Payment(Base):
     currency: Mapped[str] = mapped_column(String(3), default="USD", server_default="USD")
     status: Mapped[str] = mapped_column(
         String(32),
-        default="pending",
-        server_default="pending",
+        default=PaymentStatus.PENDING.value,
+        server_default=PaymentStatus.PENDING.value,
     )
     stripe_event_id: Mapped[str | None] = mapped_column(String(255), nullable=True, index=True)
     created_at: Mapped[datetime] = mapped_column(

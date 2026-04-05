@@ -15,6 +15,8 @@ services:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/ecommerce
       STRIPE_SECRET_KEY: sk_test_xxx
       STRIPE_WEBHOOK_SECRET: whsec_xxx
+      STRIPE_CHECKOUT_SUCCESS_URL: http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}
+      STRIPE_CHECKOUT_CANCEL_URL: http://localhost:3000/checkout/cancel
     depends_on:
       postgres:
         condition: service_healthy
