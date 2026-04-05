@@ -7,9 +7,13 @@ Backend API for a minimal e-commerce system built with **FastAPI** + **SQLAlchem
 - **Auth**: signup/login with JWT, `/me`
 - **Products**: public list/detail/search
 - **Cart**: add/update/remove items, totals
+- **Checkout**: `POST /api/v1/checkout` — cart → order snapshot → **Stripe Checkout** session (redirect URL)
+- **Stripe webhooks**: `POST /api/v1/webhooks/stripe` — signature-verified events, idempotent processing, stock decremented after payment
 - **Admin**: admin-only endpoints via `ADMIN_EMAIL`
 - **Migrations**: Alembic
 - **Quality**: Ruff (lint + format), pytest, GitHub Actions CI
+
+**Payment integration:** step-by-step plan, testing, CI notes, and Stripe CLI — [docs/STRIPE_INTEGRATION_GUIDE.md](docs/STRIPE_INTEGRATION_GUIDE.md).
 
 ---
 
@@ -35,11 +39,13 @@ uv sync --extra dev
 
 (`--extra dev` includes `pytest`, `httpx`, and `ruff` for tests and linting.)
 
-Configuration (Chapter 3):
+Configuration:
 
 ```bash
 cp .env.example .env
 ```
+
+Edit `.env`: `DATABASE_URL`, `JWT_SECRET`, and for Stripe tests **`STRIPE_SECRET_KEY`**, **`STRIPE_WEBHOOK_SECRET`**, checkout redirect URLs (see `.env.example`).
 
 Start Postgres (Docker):
 
@@ -67,6 +73,8 @@ Useful endpoints:
 - `POST /api/v1/auth/signup` — JSON `email`, `password` (min 8 chars)
 - `POST /api/v1/auth/login` — form `username` (email) + `password` → JWT
 - `GET /api/v1/auth/me` — `Authorization: Bearer <token>`
+- `POST /api/v1/checkout` — starts Stripe Checkout; returns `order_id`, `checkout_url` (requires Bearer token)
+- `POST /api/v1/webhooks/stripe` — called by Stripe (raw body + `Stripe-Signature`; no JWT)
 - `GET /api/v1/admin/health` — admin only (`ADMIN_EMAIL` must match logged-in user)
 
 Run tests:
@@ -94,7 +102,16 @@ Full guide: [docs/STEP_BY_STEP.md](docs/STEP_BY_STEP.md).
 
 This repo includes a `Dockerfile` and a compose overlay to run the **API** together with **Postgres**.
 
-Start (build + run + migrate):
+**Linux (fresh machine or server):**
+
+```bash
+chmod +x scripts/install-linux.sh
+./scripts/install-linux.sh              # Docker: API + Postgres + migrations
+./scripts/install-linux.sh --native     # uv on host + Postgres in Docker only
+sudo ./scripts/install-linux.sh --install-docker   # Debian/Ubuntu: install Docker, then re-run without sudo
+```
+
+Equivalent manual flow:
 
 ```bash
 ./scripts/start.sh
@@ -108,6 +125,8 @@ Stop:
 
 API: `http://localhost:8000`  
 Swagger: `http://localhost:8000/docs`
+
+Compose env template: [`docker-compose.app.yml`](docker-compose.app.yml) (includes Stripe placeholders; replace for real checkout).
 
 ---
 
@@ -142,7 +161,7 @@ docker login ghcr.io
 docker pull ghcr.io/<owner>/<repo>:latest
 ```
 
-3) Run the container:
+3) Run the container (extend `-e` with all variables your deployment needs; **migrations** are not run automatically — execute `alembic upgrade head` once per deploy, e.g. via an init job or one-off `docker run ... uv run alembic upgrade head`):
 
 ```bash
 docker run -d --name api \
@@ -151,12 +170,18 @@ docker run -d --name api \
   -e DATABASE_URL="postgresql+psycopg://postgres:postgres@<db-host>:5432/ecommerce" \
   -e JWT_SECRET="replace-me-with-a-strong-secret" \
   -e ADMIN_EMAIL="you@example.com" \
+  -e STRIPE_SECRET_KEY="sk_live_..." \
+  -e STRIPE_WEBHOOK_SECRET="whsec_..." \
+  -e STRIPE_CHECKOUT_SUCCESS_URL="https://your-frontend/success?session_id={CHECKOUT_SESSION_ID}" \
+  -e STRIPE_CHECKOUT_CANCEL_URL="https://your-frontend/cancel" \
   ghcr.io/<owner>/<repo>:latest
 ```
 
 Notes:
+
 - GHCR is only used to **download** the image. Once the container is running, it does **not** need GitHub to stay online.
 - Replace `<db-host>` with a real hostname/IP. If you want `@postgres:5432/...`, you must run Postgres as a **Docker container on the same Docker network** (e.g. Docker Compose).
+- Live webhooks require **HTTPS** on your public URL. Use the Dashboard signing secret for `STRIPE_WEBHOOK_SECRET` in production.
 
 ---
 
@@ -166,6 +191,7 @@ Notes:
 
 - Workflow: `.github/workflows/ci.yml`
 - Runs on every push/PR: Ruff lint, Ruff format check, pytest (SQLite + Postgres job)
+- Tests use **placeholder** Stripe env vars (no calls to the real Stripe API; client code is mocked)
 
 ### CD (publish Docker image to GHCR)
 
@@ -177,10 +203,21 @@ This repo contains a GitHub Actions workflow that builds and publishes a Docker 
 
 ---
 
-## TODO
+## Documentation
+
+| Doc | Purpose |
+|-----|---------|
+| [docs/STEP_BY_STEP.md](docs/STEP_BY_STEP.md) | Project walkthrough |
+| [docs/STRIPE_INTEGRATION_GUIDE.md](docs/STRIPE_INTEGRATION_GUIDE.md) | Stripe Checkout, webhooks, tests, CI, CLI |
+| [docs/PROJECT_DIAGRAM.md](docs/PROJECT_DIAGRAM.md) | Architecture overview |
+| [docs/MICROSERVICES_MIGRATION_GUIDE.md](docs/MICROSERVICES_MIGRATION_GUIDE.md) | Possible service split |
+
+---
+
+## TODO / follow-ups
 
 | Done | Task |
 |------|------|
-| [ ] | Stripe implementation (see `docs/STRIPE_INTEGRATION_GUIDE.md`) |
+| [x] | Stripe Checkout + webhook + tests (see `docs/STRIPE_INTEGRATION_GUIDE.md`) |
 | [ ] | Understand how these tools work: Ruff, httpx, uv, FastAPI `TestClient`, bcrypt |
 | [ ] | Clean repo and code (delete unnecessary files, ensure caches/logs are not tracked) |

@@ -59,6 +59,8 @@ def db_session():
 def app(db_session, monkeypatch):
     monkeypatch.setenv("JWT_SECRET", "test-secret-key-at-least-32-characters-long")
     monkeypatch.setenv("ADMIN_EMAIL", "admin@test.com")
+    monkeypatch.setenv("STRIPE_SECRET_KEY", "sk_test_valid_fake_for_pytest")
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_test_fake_for_pytest")
     get_settings.cache_clear()
     application = create_app()
 
